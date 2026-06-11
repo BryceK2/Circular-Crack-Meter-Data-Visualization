@@ -1,6 +1,6 @@
 from flask import Flask, request, send_file, jsonify
 import matplotlib
-matplotlib.use('Agg')  
+matplotlib.use('Agg')  # Force headless mode for server environments
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
@@ -13,15 +13,20 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 
 def excel_to_datetime(excel_date):
+    """Converts an Excel serial date float from Apps Script to a Python datetime."""
     try:
         return datetime(1899, 12, 30) + timedelta(days=float(excel_date))
     except Exception:
         return None
 
 def get_polar_coords(dt, radius=1.0):
+    """Maps a datetime to (x, y) on a circle where Jan 1 0:00 is at 12:00."""
     total_seconds_in_year = 365.25 * 24 * 3600
     start_of_year = pd.Timestamp(year=dt.year, month=1, day=1)
     seconds_elapsed = (dt - start_of_year).total_seconds()
+    
+    # In polar coordinates, 12:00 is pi/2. 
+    # Clockwise means we subtract the angle as time increases.
     angle = np.pi/2 - (seconds_elapsed / total_seconds_in_year) * 2 * np.pi
     return radius * np.cos(angle), radius * np.sin(angle)
 
@@ -37,6 +42,7 @@ def process_plots():
 
     zip_buffer = io.BytesIO()
 
+    # Compressing the images inside the ZIP using standard DEFLATE compression
     with zipfile.ZipFile(zip_buffer, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for sensor in sensors:
             sensor_id = sensor.get("id", "unknown_sensor")
@@ -84,6 +90,7 @@ def process_plots():
             seg_widths = widths[:-1]
             seg_colors = colors[:-1]
 
+            # 5x5 inch layout bounds
             fig, ax = plt.subplots(figsize=(5, 5))
             lc = LineCollection(segments, linewidths=seg_widths, colors=seg_colors, capstyle='round')
             ax.add_collection(lc)
@@ -102,7 +109,8 @@ def process_plots():
             plt.title(f"Sensor {sensor_id}\nCrack Displacement & Temp", fontsize=10, fontweight='bold', pad=10)
             
             buf = io.BytesIO()
-            plt.savefig(buf, format='png', dpi=125, bbox_inches='tight', transparent=True, optimize=True)
+            # FIX: Removed the invalid 'optimize' parameter
+            plt.savefig(buf, format='png', dpi=125, bbox_inches='tight', transparent=True)
             plt.close(fig)  
             buf.seek(0)
 
@@ -116,3 +124,4 @@ def process_plots():
         as_attachment=True,
         download_name='crack_plots.zip'
     )
+
