@@ -137,6 +137,3 @@ def process_plots():
         download_name='crack_plots.zip'
     )
 
-if __name__ == '__main__':
-    # Default port set to 5000, Render can bind to environment specific variables automatically
-    app.run(debug=True, host='0.0.0.0', port=5000)
