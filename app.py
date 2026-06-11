@@ -123,7 +123,7 @@ def process_plots():
             ax.axis('off')
 
             # Clean Title Placement 
-            ax.text(0, 1.45, f"Sensor: {sensor_id}", ha='center', va='bottom', fontsize=11, fontweight='bold')
+            ax.text(0, 1.45, f"Crack Meter: {sensor_id}", ha='center', va='bottom', fontsize=11, fontweight='bold')
 
             # --- ADD TEMPERATURE COLORBAR ---
             cbar = fig.colorbar(lc, ax=ax, pad=0.08, shrink=0.5, anchor=(0.0, 0.2))
@@ -131,13 +131,18 @@ def process_plots():
             cbar.ax.tick_params(labelsize=8)
 
             # --- ADD DISPLACEMENT SIZE LEGEND ---
-            # Creates 4 clean proxy interval lines on the upper right side
             legend_samples = np.linspace(min_disp, max_disp, 4)
             legend_elements = []
             for val in legend_samples:
                 w = 1.5 + ((val - min_disp) / disp_range) * 8.5 if disp_range > 0 else 3.0
                 legend_elements.append(
-                    Line2D([0], [0], color='darkgray', lw=w, label=f"{val:.3f} in")
+                    Line2D([0], [0], 
+                           marker='o',              # Forces a circle shape
+                           color='none',            # Removes any connecting line background
+                           markerfacecolor='darkgray', 
+                           markeredgecolor='none',
+                           markersize=w * 1.2,      # Scales the circle diameter relative to line width
+                           label=f"{val:.3f} in")
                 )
             
             ax.legend(
@@ -146,6 +151,7 @@ def process_plots():
                 loc="upper left",
                 bbox_to_anchor=(1.05, 0.9),
                 frameon=False,
+                handletextpad=0.5,                  # Adjusts spacing between circle and text
                 title_fontproperties={'weight': 'bold', 'size': 8},
                 prop={'size': 8}
             )
