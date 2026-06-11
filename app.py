@@ -78,19 +78,18 @@ def process_plots():
             coords = df_hourly.index.map(lambda x: get_polar_coords(x))
             df_hourly['X'], df_hourly['Y'] = zip(*coords)
 
-            # --- DYNAMIC THICKNESS SCALING ---
-            # Automatically scales the visual width between 1.5 and 10.0 
-            # regardless of whether data ranges in thousandths of an inch or full millimeters.
-            min_disp = df_hourly['Displacement'].min()
-            max_disp = df_hourly['Displacement'].max()
-            disp_range = max_disp - min_disp
+            # --- UPDATED DYNAMIC THICKNESS SCALING (ABS ZERO METRIC) ---
+            # Evaluate thickness based on total absolute variation away from 0.0
+            abs_disp = np.abs(df_hourly['Displacement'].values)
+            max_abs_disp = np.max(abs_disp)
 
-            if disp_range > 0:
-                widths = 1.5 + ((df_hourly['Displacement'].values - min_disp) / disp_range) * 8.5
+            # Map 0 displacement to the minimum width (1.5), and the largest absolute spike to 10.0
+            if max_abs_disp > 0:
+                widths = 1.5 + (abs_disp / max_abs_disp) * 8.5
             else:
-                widths = np.full_like(df_hourly['Displacement'].values, 3.0)
+                widths = np.full_like(abs_disp, 1.5)
 
-            # Temperature color mapping parameters
+            # Temperature color mapping parameters (Keeps actual signed value context intact)
             min_temp = df_hourly['Temperature'].min()
             max_temp = df_hourly['Temperature'].max()
             norm = Normalize(vmin=min_temp, vmax=max_temp)
@@ -130,28 +129,29 @@ def process_plots():
             cbar.set_label('Temperature (°C)', fontsize=8, fontweight='bold')
             cbar.ax.tick_params(labelsize=8)
 
-            # --- ADD DISPLACEMENT SIZE LEGEND ---
-            legend_samples = np.linspace(min_disp, max_disp, 4)
+            # --- UPDATED ABSOLUTE DISPLACEMENT SIZE LEGEND ---
+            # Build linear samples from 0 to the maximum observed absolute magnitude deviation
+            legend_samples = np.linspace(0, max_abs_disp, 4)
             legend_elements = []
             for val in legend_samples:
-                w = 1.5 + ((val - min_disp) / disp_range) * 8.5 if disp_range > 0 else 3.0
+                w = 1.5 + (val / max_abs_disp) * 8.5 if max_abs_disp > 0 else 1.5
                 legend_elements.append(
                     Line2D([0], [0], 
-                           marker='o',              # Forces a circle shape
-                           color='none',            # Removes any connecting line background
+                           marker='o',              
+                           color='none',            
                            markerfacecolor='darkgray', 
                            markeredgecolor='none',
-                           markersize=w * 1.2,      # Scales the circle diameter relative to line width
-                           label=f"{val:.3f} in")
+                           markersize=w * 1.2,      
+                           label=f"±{val:.3f} in" if val > 0 else "0.000 in") # Explicitly notes bidirectional nature
                 )
             
             ax.legend(
                 handles=legend_elements,
-                title="Displacement",
+                title="Abs Displacement",
                 loc="upper left",
                 bbox_to_anchor=(1.05, 0.9),
                 frameon=False,
-                handletextpad=0.5,                  # Adjusts spacing between circle and text
+                handletextpad=0.5,                  
                 title_fontproperties={'weight': 'bold', 'size': 8},
                 prop={'size': 8}
             )
