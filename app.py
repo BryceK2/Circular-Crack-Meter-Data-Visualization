@@ -63,7 +63,7 @@ def process_plots():
             if df.empty:
                 continue
 
-            df_hourly = df.resample('H').mean().dropna()
+            df_hourly = df.resample('h').mean().dropna()
             if df_hourly.empty:
                 continue
 
