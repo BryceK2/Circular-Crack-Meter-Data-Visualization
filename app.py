@@ -72,7 +72,7 @@ def process_plots():
                 continue
 
             # 2. Downsample to hourly readings
-            df_hourly = df.resample('H').mean().dropna()
+            df_hourly = df.resample('h').mean().dropna()
             if df_hourly.empty:
                 continue
 
