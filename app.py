@@ -126,7 +126,7 @@ def process_plots():
 
             # --- ADD TEMPERATURE COLORBAR ---
             cbar = fig.colorbar(lc, ax=ax, pad=0.08, shrink=0.5, anchor=(0.0, 0.2))
-            cbar.set_label('Temperature (°C)', fontsize=8, fontweight='bold')
+            cbar.set_label('Temperature (°F)', fontsize=8, fontweight='bold')
             cbar.ax.tick_params(labelsize=8)
 
             # --- UPDATED ABSOLUTE DISPLACEMENT SIZE LEGEND ---
